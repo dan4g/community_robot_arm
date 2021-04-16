@@ -1,0 +1,75 @@
+#include <Arduino.h>
+#include "A4988.h"
+
+#define MOTOR_STEPS 200 // Step per revolution
+
+// Enable pins for x, y and z axes
+#define EN_X 38
+#define EN_Y 56
+#define EN_Z 62
+
+#define MS1 10
+#define MS2 11
+#define MS3 12
+
+// Set 3 stepper motors (RAMP 1.4 pins)
+A4988 stepper_x(MOTOR_STEPS, 55, 54, MS1, MS2, MS3);
+A4988 stepper_y(MOTOR_STEPS, 61, 60, MS1, MS2, MS3);
+A4988 stepper_z(MOTOR_STEPS, 48, 46, MS1, MS2, MS3);
+
+char char_from_serial;
+float float_from_serial;
+
+void setup() {
+    // Set target motor RPM to 20 RPM and microstepping to 1 (full step mode)
+    pinMode(EN_X, OUTPUT);
+    pinMode(EN_Y, OUTPUT);
+    pinMode(EN_Z, OUTPUT);
+    stepper_x.begin(20, 1);
+    stepper_y.begin(20, 1);
+    stepper_z.begin(20, 1);
+
+    digitalWrite(EN_X, HIGH);
+    digitalWrite(EN_Y, HIGH);
+    digitalWrite(EN_Z, HIGH);
+
+    // Start serial connection
+    Serial.begin(115200);
+}
+
+void loop() {
+    // Reset angle variable
+    float_from_serial = 0.0;
+
+    // Parse incoming line into two values: axis name and rotation angle
+    // First char used for selecting motor
+    // Float number multiplied by 360 used for rotation angle
+    // Char and float printed on serial before and after move is finished
+    
+    if (Serial.find("x")) {
+      float_from_serial = Serial.parseFloat();
+      Serial.print("x");
+      digitalWrite(EN_X, LOW);
+      stepper_x.rotate(float_from_serial * 360);
+      digitalWrite(EN_X, HIGH);
+    }
+    else if (Serial.find("y")) {
+      float_from_serial = Serial.parseFloat();
+      Serial.print("y");
+      digitalWrite(EN_Y, LOW);
+      stepper_y.rotate(float_from_serial * 360);
+      digitalWrite(EN_Y, HIGH);
+    }
+    else if (Serial.find("z")) {
+      float_from_serial = Serial.parseFloat();
+      Serial.print("z");
+      digitalWrite(EN_Z, LOW);
+      stepper_z.rotate(float_from_serial * 360);
+      digitalWrite(EN_Z, HIGH);
+    }
+
+    if (float_from_serial != 0.0){
+      Serial.println(float_from_serial);
+    }
+    
+}
